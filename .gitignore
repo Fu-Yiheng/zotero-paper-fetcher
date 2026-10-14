@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+paperfetch-runs/
+*.pdf
+paperfetch.json
