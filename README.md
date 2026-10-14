@@ -1,4 +1,4 @@
-# fetch-paper
+# Zotero Paper Fetcher
 
 按研究主题找论文、下载 PDF、放进 Zotero 的 agent skill。**Claude Code 和 Codex 通用**（同一份 `SKILL.md`）。
 
@@ -50,7 +50,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1
 ./install.sh
 ```
 
-装进 `~/.claude/skills/fetch-paper` 和 `~/.codex/skills/fetch-paper`。加 `-Link` / `--link` 改为目录链接，改仓库即生效。
+装进 `~/.claude/skills/zotero-paper-fetcher` 和 `~/.codex/skills/zotero-paper-fetcher`，在对话里用 `/zotero-paper-fetcher` 调用，或直接说「找 30 篇 XX 方向的论文」。加 `-Link` / `--link` 改为目录链接，改仓库即生效。
 
 ## 配置
 
@@ -75,7 +75,7 @@ Zotero 需要在 设置 → 高级 里勾选「允许此计算机上的其他应
 ## 单独使用脚本
 
 ```bash
-S=~/.claude/skills/fetch-paper/scripts/paperfetch.py
+S=~/.claude/skills/zotero-paper-fetcher/scripts/paperfetch.py
 uv run --script $S search --run runs/demo --query "aerodynamic admittance bridge deck" --from-year 2015
 # 编辑 runs/demo/selection.json，格式见 SKILL.md
 uv run --script $S check  --run runs/demo

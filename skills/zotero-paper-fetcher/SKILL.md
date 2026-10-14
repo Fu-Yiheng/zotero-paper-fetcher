@@ -1,9 +1,9 @@
 ---
-name: fetch-paper
+name: zotero-paper-fetcher
 description: 按研究主题找论文、下载 PDF、导入 Zotero 指定分类。用户只给研究范围（如「桥梁断面气动导纳」）和大致篇数，agent 写检索词在 OpenAlex 检索、读标题摘要筛出几十篇、与 Zotero 库查重，再经 Elsevier API、Wiley TDM API、Springer、开放获取自动下载并导入；ASCE、IEEE 等对脚本弹人机验证的站点，分批在用户自己的浏览器打开，由用户点 Zotero Connector 保存。当用户说「下载 XX 方向的论文」「找几十篇 XX 的文献放进 Zotero」「批量下论文」「把这些 DOI 下下来」时使用。需要在校园网或机构 IP 内运行。
 ---
 
-# 按主题批量下载论文到 Zotero
+# Zotero Paper Fetcher：按主题批量下载论文到 Zotero
 
 分工：**检索词、筛选、判断由 agent 做**；下载、校验、导入由脚本 `scripts/paperfetch.py` 做；
 **人机验证和受保护站点的保存由用户自己点**。

@@ -1,5 +1,5 @@
 ﻿<#
-  安装 fetch-paper skill 到 Claude Code 和 Codex。
+  安装 Zotero Paper Fetcher skill 到 Claude Code 和 Codex。
 
     powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1          复制
     powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1 -Link    目录联接（改仓库即生效，适合开发）
@@ -9,7 +9,7 @@
 param([switch]$Link)
 $ErrorActionPreference = 'Stop'
 
-$src = Join-Path $PSScriptRoot 'skills\fetch-paper'
+$src = Join-Path $PSScriptRoot 'skills\zotero-paper-fetcher'
 $targets = @(
   (Join-Path $env:USERPROFILE '.claude\skills'),
   (Join-Path $env:USERPROFILE '.codex\skills')
@@ -19,7 +19,7 @@ foreach ($root in $targets) {
   $agent = Split-Path (Split-Path $root -Parent) -Leaf
   if (-not (Test-Path (Split-Path $root -Parent))) { "跳过 $agent（未安装）"; continue }
   New-Item -ItemType Directory -Force $root | Out-Null
-  $dst = Join-Path $root 'fetch-paper'
+  $dst = Join-Path $root 'zotero-paper-fetcher'
   if (Test-Path $dst) {
     $item = Get-Item $dst -Force
     if ($item.LinkType) { $item.Delete() } else { Remove-Item $dst -Recurse -Force -Confirm:$false }

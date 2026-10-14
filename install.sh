@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# 安装 fetch-paper skill 到 Claude Code 和 Codex。
+# 安装 Zotero Paper Fetcher skill 到 Claude Code 和 Codex。
 #   ./install.sh          复制
 #   ./install.sh --link   软链接（改仓库即生效）
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
-src="$here/skills/fetch-paper"
+src="$here/skills/zotero-paper-fetcher"
 
 for root in "$HOME/.claude/skills" "$HOME/.codex/skills"; do
   agent_dir="$(dirname "$root")"
   if [ ! -d "$agent_dir" ]; then echo "跳过 $agent_dir（未安装）"; continue; fi
   mkdir -p "$root"
-  dst="$root/fetch-paper"
+  dst="$root/zotero-paper-fetcher"
   rm -rf "$dst"
   if [ "${1:-}" = "--link" ]; then ln -s "$src" "$dst"; echo "链接 $dst -> $src"
   else cp -R "$src" "$dst"; echo "复制到 $dst"; fi
