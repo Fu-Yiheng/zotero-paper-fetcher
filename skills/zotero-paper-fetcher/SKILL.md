@@ -25,8 +25,8 @@ description: 按研究主题找论文、下载 PDF、导入 Zotero 指定分类�
 | 运行脚本 | `uv run --script <本 skill 目录>/scripts/paperfetch.py <子命令> ...`（依赖由 uv 自动装；Windows 下加 `PYTHONIOENCODING=utf-8`） |
 | PDF 校验 | 需要 `pdfinfo`、`pdftotext`（Poppler 或 TeX Live 自带的 xpdf） |
 | Zotero | Zotero 7 正在运行；设置 → 高级 →「允许此计算机上的其他应用程序与 Zotero 通讯」已勾选 |
-| 配置 | `~/.config/academic-agent/paperfetch.json`：`zotero_collection`（固定的目标分类，名字或完整路径「父分类/子分类」）、`download_dir`（Zotero 没开时的下载目录）、`elsevier_api_key`、`elsevier_insttoken`（可空）、`wiley_tdm_token`、`openalex_api_key`（可空）、`prefer_published`（默认 true） |
-| 去向 | **Zotero 开着** → 导入 `zotero_collection`；**没开** → 存进 `download_dir`，命名「第一作者 等 - 年份 - 标题.pdf」。之后打开 Zotero 重跑 `fetch`，已下载的直接导入，不重新下载 |
+| 配置 | `~/.config/academic-agent/paperfetch.json`：`zotero_collection`（固定的目标分类，名字或完整路径「父分类/子分类」）、`elsevier_api_key`、`elsevier_insttoken`（可空）、`wiley_tdm_token`、`openalex_api_key`（可空）、`prefer_published`（默认 true） |
+| 去向 | **Zotero 开着** → 导入 `zotero_collection`；**没开** → 存进用户**这次亲自指定**的文件夹（`fetch --dir`），命名「第一作者 等 - 年份 - 标题.pdf」。下载目录没有默认值，每次都要问用户，不写进配置、不沿用上次的。之后打开 Zotero 重跑 `fetch`，已下载的直接导入，不重新下载 |
 | 暂存 PDF | `~/.cache/academic-agent/paperfetch/<run 名>/`，导入 Zotero 后可删 |
 | 运行记录 | 项目有约定照约定，否则 `paperfetch-runs/<YYYY-MM-DD>_<英文短名>/`：candidates、selection、results、fetch.log |
 | Codex | 沙箱需允许联网，并能访问 `127.0.0.1:23119`（Zotero） |
@@ -50,8 +50,11 @@ description: 按研究主题找论文、下载 PDF、导入 Zotero 指定分类�
 
 ### 1. 明确范围
 从用户的话里确定：主题、篇数（默认 30）、年份范围、要不要综述。
-目标分类和下载目录默认取配置；用户这次另指定时，写进 selection.json 的 `collection` 或给 `fetch` 加 `--dir`。
-分类要由用户事先在 Zotero 里建好（脚本建不了分类）。缺的只问一次，一条消息问完。
+先运行 `targets` 看 Zotero 开没开（没开会直接报「Zotero 没在运行」）：
+- **开着**：目标分类取配置；用户这次另指定时写进 selection.json 的 `collection`。分类要由用户事先在 Zotero 里建好（脚本建不了分类）
+- **没开**：问用户这次下载到哪个文件夹，`fetch` 时用 `--dir` 传入。**每次都问**，即使上次给过也不沿用
+
+缺的只问一次，和上面的范围问题合在一条消息里问完。
 
 ### 2. 检索
 写 4–8 条英文检索词：同义词、上位与下位概念、关键方法名、常见缩写各覆盖一条，不要只换词序。
@@ -87,9 +90,11 @@ uv run --script .../paperfetch.py check --run <run>
 
 ### 6. 下载导入
 ```
-uv run --script .../paperfetch.py fetch --run <run>        # 先加 --dry-run 看计划
+uv run --script .../paperfetch.py fetch --run <run>                  # Zotero 开着；先加 --dry-run 看计划
+uv run --script .../paperfetch.py fetch --run <run> --dir "<用户给的文件夹>"   # Zotero 没开
 ```
-脚本自己判断去向：Zotero 开着就导入分类，没开就存文件夹（日志第一行会写明）。没开 Zotero 时没法查重，报告里提醒用户。
+脚本自己判断去向：Zotero 开着就导入分类，没开就存 `--dir` 指定的文件夹（日志第一行会写明）。
+Zotero 没开又没给 `--dir` 时脚本会停下，这时去问用户，不要自己挑一个文件夹。没开 Zotero 时没法查重，报告里提醒用户。
 30 篇约 5–10 分钟（每个站点的请求间隔几秒到十秒），放后台跑。中断后重跑会接着做：已导入的跳过，暂存目录里已校验的 PDF 直接导入。
 每篇的 PDF 都要校验：至少 2 页，前两页能找到标题（词重合 ≥ 0.6）或 DOI。
 没通过的文件改名为 `*.rejected.pdf` 留在暂存目录，不导入。
@@ -123,7 +128,7 @@ Zotero 没开时，请用户在页面上点「下载 PDF」存进下载目录即
 |---|---|
 | `imported` | 脚本已下载、校验并导入目标分类 |
 | `imported_manual` | 用户用 Connector 保存后，`check` 确认已带 PDF |
-| `downloaded` | Zotero 没开，PDF 已存进下载目录；打开 Zotero 后重跑 `fetch` 即导入 |
+| `downloaded` | Zotero 没开，PDF 已存进用户指定的文件夹；打开 Zotero 后重跑 `fetch` 即导入 |
 | `in_library` / `in_library_no_pdf` | 库里已有（带 / 不带 PDF），没有重复导入 |
 | `manual` | 需要用户在浏览器里保存（包括只找到作者稿的；有备用作者稿时记录里有 `alt`） |
 | `no_access` | 出版社 API 明确表示本校未订阅，也没有开放获取版本 |

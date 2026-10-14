@@ -780,12 +780,14 @@ def cmd_fetch(a) -> None:
         target = z.resolve_target(collection)
         lib = library_check(z, papers, target["path"])
         dest = f"Zotero「{target['path']}」"
-    else:  # Zotero 没开：存到指定文件夹
-        out_dir = Path(a.dir or cfg.get("download_dir") or "")
-        if not str(out_dir) or str(out_dir) == ".":
-            raise SystemExit("Zotero 没开，需要下载目录：配置 download_dir，或 --dir")
-        out_dir.mkdir(parents=True, exist_ok=True)
-        dest = f"文件夹 {out_dir}（Zotero 未运行）"
+    else:  # Zotero 没开：存到用户这次指定的文件夹（每次都由用户指定，不读配置、不沿用上次的）
+        if not a.dir and not a.dry_run:
+            raise SystemExit("Zotero 没在运行，PDF 只能存到文件夹。请问用户这次下载到哪个文件夹"
+                             "（每次都要问，不要沿用上次的），再加 --dir <文件夹> 重跑。")
+        out_dir = Path(a.dir).expanduser().resolve() if a.dir else None
+        if out_dir:
+            out_dir.mkdir(parents=True, exist_ok=True)
+        dest = f"文件夹 {out_dir}（Zotero 未运行）" if out_dir else "Zotero 未运行，尚未指定文件夹（仅预览）"
     allow_am = a.allow_am or not cfg.get("prefer_published", True)
     keys = {k: bool(cfg.get(k)) for k in ("elsevier_api_key", "wiley_tdm_token")}
     log(f"== fetch {len(papers)} 篇 -> {dest}；已配置 {keys}；{'接受作者稿' if allow_am else '只要正式版，作者稿留作备用'}")
@@ -794,8 +796,11 @@ def cmd_fetch(a) -> None:
         k = paper_key(p)
         prev = results.get(k, {})
         head = f"[{i}/{len(papers)}] {p.get('title', '')[:60]}"
-        done = prev.get("status") in DONE or \
-            (out_dir and prev.get("status") == "downloaded" and Path(prev.get("saved_to", "")).exists())
+        saved = Path(prev["saved_to"]) if prev.get("saved_to") else None
+        # 存过、而且就存在这次指定的文件夹里才算完成；换了文件夹就从暂存目录再复制一份
+        done = prev.get("status") in DONE or bool(
+            out_dir and prev.get("status") == "downloaded" and saved and saved.exists()
+            and saved.parent.resolve() == out_dir)
         if done and not a.retry:
             counts[prev["status"]] = counts.get(prev["status"], 0) + 1
             continue
@@ -845,8 +850,9 @@ def cmd_fetch(a) -> None:
                 if not dst.exists():
                     shutil.copyfile(pdf_path, dst)
                 rec.update(status="downloaded", saved_to=str(dst))
-        results[k] = rec
-        save_json(run / "results.json", results)
+        if not a.dry_run:  # 预览不改运行记录，否则会冲掉已导入的状态
+            results[k] = rec
+            save_json(run / "results.json", results)
         counts[rec["status"]] = counts.get(rec["status"], 0) + 1
         log(f"{head}  -> {rec['status']}  {rec.get('channel', '')}  {'; '.join(rec['tries'][-2:])}")
     log(f"== 完成：{counts}")
@@ -927,7 +933,7 @@ def main() -> None:
     s.add_argument("--collection")
     s.add_argument("--only", help="逗号分隔的 DOI，只处理这些")
     s.add_argument("--no-zotero", action="store_true", help="Zotero 开着也只存文件夹")
-    s.add_argument("--dir", help="Zotero 没开时的下载目录（默认取配置 download_dir）")
+    s.add_argument("--dir", help="Zotero 没开时这次的下载目录（每次由用户指定，没有默认值）")
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("--retry", action="store_true", help="已导入的也重做")
     s.add_argument("--allow-am", action="store_true", help="拿不到正式版时导入作者稿（Accepted/Submitted Version）")

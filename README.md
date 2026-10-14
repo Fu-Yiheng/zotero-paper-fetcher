@@ -16,7 +16,7 @@ agent 会：
 1. 写 4–8 条英文检索词，在 OpenAlex 检索，读标题和摘要筛出相关的，列成表给你确认
 2. 和 Zotero 库查重，库里已有的不重复导入
 3. 能自动下的自动下：Elsevier 官方 API、Wiley TDM API、Springer、开放获取；每个 PDF 都校验页数和标题，然后连同题录导入 Zotero 的固定分类
-4. Zotero 没开时改存到指定文件夹，命名「第一作者 等 - 年份 - 标题.pdf」；之后打开 Zotero 重跑，已下载的直接导入
+4. Zotero 没开时，先问你这次存到哪个文件夹（每次都问，没有默认目录），命名「第一作者 等 - 年份 - 标题.pdf」；之后打开 Zotero 重跑，已下载的直接导入
 5. 剩下对脚本弹人机验证的站点（ASCE、IEEE 等），每批 8 篇在你的浏览器里打开，你点一下 Zotero Connector 保存
 6. 核对每一篇的状态，写报告
 
@@ -60,7 +60,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1
 |---|---|
 | `zotero_collection` | Zotero 开着时导入的固定分类，需事先建好；重名时写完整路径「父分类/子分类」 |
 | `prefer_published` | 默认 `true`：只自动导入正式版，作者稿留作备用 |
-| `download_dir` | Zotero 没开时的下载目录 |
 | `elsevier_api_key` | 在 [dev.elsevier.com](https://dev.elsevier.com/) 用机构邮箱注册后创建 |
 | `elsevier_insttoken` | 一般留空；学校另行提供时才填 |
 | `wiley_tdm_token` | 登录 Wiley Online Library，在 Text and Data Mining 页面点 "Get a TDM token"，接受许可 |
